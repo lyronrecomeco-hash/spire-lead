@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useKanbanStatuses } from '@/hooks/useKanbanStatuses';
 import { LeadModal } from '@/components/modals/LeadModal';
-import { Plus, Search, MessageCircle, DollarSign, Loader2, CheckCircle, XCircle, Clock, UserPlus, Filter, AlertTriangle, Settings2 } from 'lucide-react';
+import { Plus, Search, MessageCircle, DollarSign, Loader2, CheckCircle, Clock, UserPlus, Filter, AlertTriangle, Settings2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -23,8 +24,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 
 type KanbanStatusColumn = { id: string; title: string; color: string };
-
-const initialColumns: KanbanStatusColumn[] = [];
 
 const paymentStatusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   pending: { label: 'Não Pago', color: 'text-warning', bg: 'bg-warning/20', icon: Clock },
@@ -151,8 +150,9 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
 }
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, updateLead } = useLeads();
+  const { leads, loading: leadsLoading, updateLeadStatus, updateLead } = useLeads();
   const { createCustomer } = useCustomers();
+  const { statuses, loading: statusesLoading, createStatus, deleteStatus } = useKanbanStatuses();
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
@@ -160,8 +160,16 @@ export default function KanbanPage() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [defaultStatus, setDefaultStatus] = useState<string>('');
-  const [columns, setColumns] = useState<KanbanStatusColumn[]>(initialColumns);
   const [newStatusName, setNewStatusName] = useState('');
+
+  // Map statuses to columns format
+  const columns: KanbanStatusColumn[] = statuses.map(s => ({
+    id: s.id,
+    title: s.name,
+    color: s.color,
+  }));
+
+  const loading = leadsLoading || statusesLoading;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -210,17 +218,36 @@ export default function KanbanPage() {
     handleAddLead(columns[0].id);
   };
 
-  const handleAddStatus = () => {
+  const handleAddStatus = async () => {
     if (!newStatusName.trim()) return;
-    const id = newStatusName.toLowerCase().replace(/\s+/g, '_');
-    if (columns.some(c => c.id === id)) {
+    
+    // Check if name already exists
+    if (statuses.some(s => s.name.toLowerCase() === newStatusName.toLowerCase())) {
       toast.error('Status já existe!');
       return;
     }
 
-    setColumns(prev => [...prev, { id, title: newStatusName, color: 'bg-muted-foreground' }]);
-    setNewStatusName('');
-    toast.success('Status adicionado!');
+    try {
+      await createStatus(newStatusName.trim());
+      setNewStatusName('');
+    } catch (error) {
+      // Error already handled in hook
+    }
+  };
+
+  const handleDeleteStatus = async (statusId: string) => {
+    // Check if there are leads in this status
+    const leadsInStatus = leads.filter(l => l.status === statusId);
+    if (leadsInStatus.length > 0) {
+      toast.error(`Não é possível excluir: ${leadsInStatus.length} lead(s) neste status.`);
+      return;
+    }
+
+    try {
+      await deleteStatus(statusId);
+    } catch (error) {
+      // Error already handled in hook
+    }
   };
 
   // Stats
@@ -333,12 +360,24 @@ export default function KanbanPage() {
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Status atuais:</p>
-              {columns.map((col) => (
-                <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-                  <div className={cn('w-3 h-3 rounded-full', col.color)} />
-                  <span className="text-sm text-foreground">{col.title}</span>
-                </div>
-              ))}
+              {columns.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70 py-4 text-center">Nenhum status criado</p>
+              ) : (
+                columns.map((col) => (
+                  <div key={col.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <div className={cn('w-3 h-3 rounded-full', col.color)} />
+                      <span className="text-sm text-foreground">{col.title}</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteStatus(col.id)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
