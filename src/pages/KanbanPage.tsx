@@ -71,37 +71,65 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
           return (
             <div
               key={lead.id}
-              className="glass-card-hover p-3 cursor-pointer group"
+              className="group relative bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl border border-border/40 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.3)] hover:-translate-y-0.5"
               onClick={() => onCardClick(lead)}
               draggable
               data-id={lead.id}
             >
-              {/* Status Badge - Top */}
-              <div className="flex items-center justify-between mb-2.5">
-                <div className={cn('flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full', paymentInfo.bg, paymentInfo.color)}>
+              {/* Gradient accent line */}
+              <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              {/* Header: Payment Status & WhatsApp */}
+              <div className="flex items-center justify-between mb-3">
+                <div className={cn(
+                  'flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-md border backdrop-blur-sm',
+                  paymentInfo.color,
+                  paymentInfo.bg,
+                  'border-current/20'
+                )}>
                   <PaymentIcon className="w-3 h-3" />
                   {paymentInfo.label}
                 </div>
                 {lead.customer?.phone && (
                   <button
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.customer.phone.replace(/\D/g, '')}`, '_blank'); }}
-                    className="p-1.5 rounded-lg bg-success/20 text-success opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg bg-success/10 text-success border border-success/20 opacity-0 group-hover:opacity-100 transition-all hover:bg-success/20 hover:scale-110"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
               
-              {/* Lead Info */}
-              <div className="mb-2">
-                <p className="font-medium text-sm text-foreground truncate">{lead.customer?.name || 'Sem cliente'}</p>
-                <p className="text-xs text-muted-foreground truncate">{lead.product}</p>
+              {/* Customer & Product */}
+              <div className="mb-3 space-y-1">
+                <p className="font-semibold text-sm text-foreground truncate leading-tight">
+                  {lead.customer?.name || 'Sem cliente'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                  {lead.product}
+                </p>
               </div>
               
-              {/* Value */}
-              <div className="flex items-center gap-1.5 text-sm text-primary font-semibold">
-                <DollarSign className="w-3.5 h-3.5" />
-                R$ {lead.value?.toLocaleString('pt-BR')}
+              {/* Value with gradient background */}
+              <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm font-bold text-foreground">
+                    R$ {lead.value?.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                {lead.tags && lead.tags.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    {lead.tags.slice(0, 2).map((tag, i) => (
+                      <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           );
