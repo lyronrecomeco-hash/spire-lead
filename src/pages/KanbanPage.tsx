@@ -321,6 +321,7 @@ export default function KanbanPage() {
         onClose={() => { setIsLeadModalOpen(false); setEditingLead(null); }} 
         lead={editingLead}
         defaultStatus={defaultStatus}
+        availableStatuses={columns}
       />
       <CustomerModal 
         isOpen={isCustomerModalOpen} 

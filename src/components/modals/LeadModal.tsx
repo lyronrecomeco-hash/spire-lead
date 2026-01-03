@@ -8,14 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLeads, Lead } from '@/hooks/useLeads';
 import { useCustomers } from '@/hooks/useCustomers';
 
+interface StatusColumn {
+  id: string;
+  title: string;
+}
+
 interface LeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   lead?: Lead | null;
   defaultStatus?: string;
+  availableStatuses?: StatusColumn[];
 }
 
-export function LeadModal({ isOpen, onClose, lead, defaultStatus = 'new' }: LeadModalProps) {
+export function LeadModal({ isOpen, onClose, lead, defaultStatus = '', availableStatuses = [] }: LeadModalProps) {
   const { createLead, updateLead } = useLeads();
   const { customers } = useCustomers();
   const [loading, setLoading] = useState(false);
@@ -163,13 +169,13 @@ export function LeadModal({ isOpen, onClose, lead, defaultStatus = 'new' }: Lead
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">Novo Lead</SelectItem>
-                  <SelectItem value="contacted">Contato Iniciado</SelectItem>
-                  <SelectItem value="proposal">Proposta Enviada</SelectItem>
-                  <SelectItem value="negotiation">Negociação</SelectItem>
-                  <SelectItem value="waiting_payment">Aguardando Pagamento</SelectItem>
-                  <SelectItem value="closed">Venda Concluída</SelectItem>
-                  <SelectItem value="lost">Perdido</SelectItem>
+                  {availableStatuses.length > 0 ? (
+                    availableStatuses.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value={formData.status || 'default'}>{formData.status || 'Sem status'}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
