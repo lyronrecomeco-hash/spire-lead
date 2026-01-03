@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,36 +6,56 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCustomers, Customer } from '@/hooks/useCustomers';
+import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   customer?: Customer | null;
+  onSave?: (data: Partial<Customer>) => Promise<void>;
 }
 
-export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps) {
-  const { createCustomer, updateCustomer } = useCustomers();
+export function CustomerModal({ isOpen, onClose, customer, onSave }: CustomerModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: customer?.name || '',
-    email: customer?.email || '',
-    phone: customer?.phone || '',
-    company: customer?.company || '',
-    source: customer?.source || 'manual',
-    notes: customer?.notes || '',
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    source: 'manual',
+    notes: '',
   });
+
+  useEffect(() => {
+    if (customer) {
+      setFormData({
+        name: customer.name || '',
+        email: customer.email || '',
+        phone: customer.phone || '',
+        company: customer.company || '',
+        source: customer.source || 'manual',
+        notes: customer.notes || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        source: 'manual',
+        notes: '',
+      });
+    }
+  }, [customer, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!onSave) return;
+    
     setLoading(true);
 
     try {
-      if (customer) {
-        await updateCustomer(customer.id, formData);
-      } else {
-        await createCustomer(formData);
-      }
+      await onSave(formData);
       onClose();
     } catch (error) {
       console.error(error);
@@ -59,11 +79,11 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="glass-card w-full max-w-lg p-6"
+          className="glass-card w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-foreground">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
               {customer ? 'Editar Cliente' : 'Novo Cliente'}
             </h2>
             <button
@@ -75,8 +95,8 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
                 <Label>Nome *</Label>
                 <Input
                   value={formData.name}
@@ -123,7 +143,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border border-border">
                     <SelectItem value="manual">Manual</SelectItem>
                     <SelectItem value="website">Website</SelectItem>
                     <SelectItem value="instagram">Instagram</SelectItem>
@@ -135,7 +155,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
                 </Select>
               </div>
 
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Label>Notas</Label>
                 <Textarea
                   value={formData.notes}
