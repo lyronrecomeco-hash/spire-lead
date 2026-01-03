@@ -12,10 +12,12 @@ import {
   Zap, 
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   className?: string;
@@ -37,6 +39,7 @@ const menuItems = [
 export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { logout, tokenName } = useAuth();
 
   return (
     <motion.aside
@@ -57,14 +60,14 @@ export function Sidebar({ className }: SidebarProps) {
             className="flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
+              <span className="text-lg font-bold text-primary-foreground">G</span>
             </div>
-            <span className="font-semibold text-lg gradient-text">CRM Pro</span>
+            <span className="font-semibold text-lg gradient-text">Genesis</span>
           </motion.div>
         )}
         {collapsed && (
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto">
-            <span className="text-lg font-bold text-primary-foreground">C</span>
+            <span className="text-lg font-bold text-primary-foreground">G</span>
           </div>
         )}
       </div>
@@ -109,8 +112,23 @@ export function Sidebar({ className }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* User & Controls */}
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        {!collapsed && tokenName && (
+          <div className="px-3 py-2 rounded-lg bg-sidebar-accent/50">
+            <p className="text-xs text-muted-foreground">Logado como</p>
+            <p className="text-sm font-medium text-foreground truncate">{tokenName}</p>
+          </div>
+        )}
+        
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-destructive/10 hover:bg-destructive/20 transition-colors text-destructive"
+        >
+          <LogOut className="w-4 h-4" />
+          {!collapsed && <span className="text-sm">Sair</span>}
+        </button>
+
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-sidebar-accent hover:bg-sidebar-accent/80 transition-colors text-muted-foreground hover:text-foreground"
