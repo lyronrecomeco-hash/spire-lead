@@ -1,89 +1,84 @@
 import { motion } from 'framer-motion';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { PipelineChart } from '@/components/dashboard/PipelineChart';
-import { ConversionChart } from '@/components/dashboard/ConversionChart';
-import { UpcomingTasks } from '@/components/dashboard/UpcomingTasks';
-import { mockDashboardMetrics, mockActivities, mockTasks } from '@/data/mockData';
-import {
-  Users,
-  Handshake,
-  TrendingUp,
-  DollarSign,
-  AlertCircle,
-  Target,
-} from 'lucide-react';
+import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
+import { useActivities } from '@/hooks/useActivities';
+import { useTasks } from '@/hooks/useTasks';
+import { Users, Handshake, TrendingUp, DollarSign, AlertCircle, Target, CheckSquare, CreditCard } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function Dashboard() {
-  const metrics = mockDashboardMetrics;
+  const { metrics, loading } = useDashboardMetrics();
+  const { activities } = useActivities();
+  const { tasks } = useTasks();
+
+  const pendingTasks = tasks.filter(t => t.status !== 'completed').slice(0, 5);
 
   return (
     <MainLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Visão geral das suas operações de vendas
-          </p>
+          <p className="text-muted-foreground">Visão geral - Genesis Projects</p>
         </motion.div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <MetricCard
-            title="Leads Ativos"
-            value={metrics.activeLeads}
-            icon={Users}
-            variant="primary"
-            trend={{ value: 12, isPositive: true }}
-          />
-          <MetricCard
-            title="Negociações"
-            value={metrics.ongoingNegotiations}
-            icon={Handshake}
-            variant="warning"
-          />
-          <MetricCard
-            title="Vendas (Mês)"
-            value={metrics.closedDealsMonth}
-            icon={TrendingUp}
-            variant="success"
-            trend={{ value: 8, isPositive: true }}
-          />
-          <MetricCard
-            title="Valores Pendentes"
-            value={`R$ ${(metrics.pendingValue / 1000).toFixed(0)}k`}
-            icon={DollarSign}
-            variant="default"
-          />
-          <MetricCard
-            title="Follow-ups Atrasados"
-            value={metrics.overdueFollowUps}
-            icon={AlertCircle}
-            variant="danger"
-          />
-          <MetricCard
-            title="Taxa de Conversão"
-            value={`${metrics.conversionRate}%`}
-            icon={Target}
-            variant="success"
-          />
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+          <MetricCard title="Leads Ativos" value={loading ? '...' : metrics.activeLeads} icon={Users} variant="primary" />
+          <MetricCard title="Negociações" value={loading ? '...' : metrics.ongoingNegotiations} icon={Handshake} variant="warning" />
+          <MetricCard title="Vendas (Mês)" value={loading ? '...' : metrics.closedDealsMonth} icon={TrendingUp} variant="success" />
+          <MetricCard title="Pendente" value={loading ? '...' : `R$ ${(metrics.pendingValue / 1000).toFixed(0)}k`} icon={DollarSign} variant="default" />
         </div>
 
-        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PipelineChart />
-          <ConversionChart />
-        </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
+            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-primary" />
+              Tarefas Pendentes
+            </h3>
+            <div className="space-y-3">
+              {pendingTasks.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhuma tarefa pendente</p>
+              ) : (
+                pendingTasks.map((task) => (
+                  <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{task.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(task.due_date), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <span className={`status-badge ${task.priority === 'urgent' ? 'status-danger' : task.priority === 'high' ? 'status-warning' : 'status-info'}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
 
-        {/* Activities & Tasks Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ActivityFeed activities={mockActivities} />
-          <UpcomingTasks tasks={mockTasks} />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5">
+            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-primary" />
+              Atividades Recentes
+            </h3>
+            <div className="space-y-3">
+              {activities.slice(0, 5).map((activity) => (
+                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+                  <div>
+                    <p className="text-sm text-foreground">{activity.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(activity.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {activities.length === 0 && (
+                <p className="text-muted-foreground text-sm">Nenhuma atividade recente</p>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </MainLayout>

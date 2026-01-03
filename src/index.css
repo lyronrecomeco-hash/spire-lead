@@ -163,7 +163,7 @@
   }
 
   .kanban-column {
-    @apply glass-card p-4 min-w-[320px] max-w-[320px] h-fit max-h-[calc(100vh-200px)] overflow-y-auto;
+    @apply glass-card p-3 min-w-[240px] max-w-[240px] h-fit max-h-[calc(100vh-220px)] overflow-y-auto;
   }
 
   .kanban-card {
