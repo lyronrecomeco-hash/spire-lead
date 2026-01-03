@@ -1,38 +1,27 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { useTasks } from '@/hooks/useTasks';
+import { useTeamMembers, TeamMember } from '@/hooks/useTeamMembers';
 import { useMemo, useState } from 'react';
-import { User, Target, CheckCircle, DollarSign, TrendingUp, Award, Plus, Edit, Trash2, Mail, Phone, X } from 'lucide-react';
+import { User, Target, CheckCircle, DollarSign, Award, Plus, Edit, Trash2, Mail, Phone, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  avatar?: string;
-}
-
 export default function EquipePage() {
   const { leads } = useLeads();
   const { tasks } = useTasks();
+  const { members, loading, createMember, updateMember, deleteMember } = useTeamMembers();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: '1', name: 'João Silva', email: 'joao@genesis.com', phone: '(11) 99999-0001', role: 'Gerente de Vendas' },
-    { id: '2', name: 'Maria Santos', email: 'maria@genesis.com', phone: '(11) 99999-0002', role: 'Vendedor' },
-    { id: '3', name: 'Carlos Oliveira', email: 'carlos@genesis.com', phone: '(11) 99999-0003', role: 'Vendedor' },
-  ]);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', role: '' });
+  const [saving, setSaving] = useState(false);
 
   // Agrupa por assigned_to
   const teamStats = useMemo(() => {
-    return teamMembers.map(member => {
+    return members.map(member => {
       const memberLeads = leads.filter(l => l.assigned_to === member.name);
       const closedLeads = memberLeads.filter(l => l.status === 'closed');
       const memberTasks = tasks.filter(t => t.assigned_to === member.name);
@@ -52,21 +41,21 @@ export default function EquipePage() {
         conversionRate,
       };
     }).sort((a, b) => b.totalValue - a.totalValue);
-  }, [leads, tasks, teamMembers]);
+  }, [leads, tasks, members]);
 
   const topPerformer = teamStats.find(m => m.totalValue > 0) || teamStats[0];
 
   const totalStats = useMemo(() => ({
-    members: teamMembers.length,
+    members: members.length,
     totalLeads: teamStats.reduce((sum, m) => sum + m.totalLeads, 0),
     closedLeads: teamStats.reduce((sum, m) => sum + m.closedLeads, 0),
     totalValue: teamStats.reduce((sum, m) => sum + m.totalValue, 0),
-  }), [teamStats, teamMembers]);
+  }), [teamStats, members]);
 
   const handleOpenModal = (member?: TeamMember) => {
     if (member) {
       setEditingMember(member);
-      setFormData({ name: member.name, email: member.email, phone: member.phone, role: member.role });
+      setFormData({ name: member.name, email: member.email, phone: member.phone || '', role: member.role || '' });
     } else {
       setEditingMember(null);
       setFormData({ name: '', email: '', phone: '', role: '' });
@@ -74,28 +63,38 @@ export default function EquipePage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim() || !formData.email.trim()) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
 
-    if (editingMember) {
-      setTeamMembers(members => members.map(m => 
-        m.id === editingMember.id ? { ...m, ...formData } : m
-      ));
-      toast.success('Membro atualizado!');
-    } else {
-      setTeamMembers(members => [...members, { id: Date.now().toString(), ...formData }]);
-      toast.success('Membro adicionado!');
+    setSaving(true);
+    try {
+      if (editingMember) {
+        await updateMember({ id: editingMember.id, ...formData });
+      } else {
+        await createMember(formData);
+      }
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setTeamMembers(members => members.filter(m => m.id !== id));
-    toast.success('Membro removido!');
+  const handleDelete = async (id: string) => {
+    await deleteMember(id);
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
