@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
+import { useSecurityProtection } from "@/hooks/useSecurityProtection";
 import Dashboard from "./pages/Dashboard";
 import KanbanPage from "./pages/KanbanPage";
 import LeadsPage from "./pages/LeadsPage";
@@ -61,16 +62,26 @@ function AppRoutes() {
   );
 }
 
+function AppWithSecurity() {
+  useSecurityProtection();
+  
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      <WelcomeModal />
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <WelcomeModal />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <AppWithSecurity />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

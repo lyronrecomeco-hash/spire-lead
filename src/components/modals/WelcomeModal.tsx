@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, Wrench, Sparkles, ChevronLeft, ChevronRight, LayoutDashboard, Users, Target, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const STORAGE_KEY = 'genesis-welcome-shown';
 
@@ -77,13 +78,19 @@ const slides = [
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem(STORAGE_KEY);
-    if (!hasSeenWelcome) {
-      setIsOpen(true);
+    // Only show modal if user is authenticated and hasn't seen it before
+    if (isAuthenticated) {
+      const hasSeenWelcome = localStorage.getItem(STORAGE_KEY);
+      if (!hasSeenWelcome) {
+        setIsOpen(true);
+      }
+    } else {
+      setIsOpen(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const handleClose = () => {
     localStorage.setItem(STORAGE_KEY, 'true');
