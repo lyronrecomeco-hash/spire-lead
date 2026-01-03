@@ -14,7 +14,290 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      access_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      activities: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          description: string
+          id: string
+          lead_id: string | null
+          metadata: Json | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          description: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          description?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          avatar_url: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          customer_id: string | null
+          down_payment: number | null
+          id: string
+          installments: number | null
+          last_contact: string | null
+          next_follow_up: string | null
+          notes: string | null
+          payment_status: string | null
+          product: string
+          status: string
+          tags: string[] | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          down_payment?: number | null
+          id?: string
+          installments?: number | null
+          last_contact?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          payment_status?: string | null
+          product: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          down_payment?: number | null
+          id?: string
+          installments?: number | null
+          last_contact?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          payment_status?: string | null
+          product?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          due_date: string
+          id: string
+          installment_number: number | null
+          lead_id: string | null
+          paid_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          due_date: string
+          id?: string
+          installment_number?: number | null
+          lead_id?: string | null
+          paid_at?: string | null
+          status?: string
+          type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number | null
+          lead_id?: string | null
+          paid_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          due_date: string
+          id: string
+          lead_id: string | null
+          priority: string
+          status: string
+          title: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          lead_id?: string | null
+          priority?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          lead_id?: string | null
+          priority?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
