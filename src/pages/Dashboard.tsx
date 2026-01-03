@@ -6,7 +6,8 @@ import { useTasks } from '@/hooks/useTasks';
 import { useLeads } from '@/hooks/useLeads';
 import { usePayments } from '@/hooks/usePayments';
 import { LeadsOverTimeChart, RevenueOverTimeChart } from '@/components/dashboard/InteractiveCharts';
-import { Users, Handshake, TrendingUp, DollarSign, AlertCircle, CheckSquare, Target, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { InteractiveBackground } from '@/components/dashboard/InteractiveBackground';
+import { Users, Handshake, TrendingUp, DollarSign, AlertCircle, CheckSquare, Target, Calendar, ArrowUpRight } from 'lucide-react';
 import { format, isToday, isPast, isTomorrow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
@@ -70,7 +71,8 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <InteractiveBackground />
+      <div className="space-y-6 relative z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">Dashboard</h1>
@@ -99,7 +101,7 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {pipelineSummary.map((stage) => (
-              <div key={stage.id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <div key={stage.id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn('w-2 h-2 rounded-full', stage.color)} />
                   <span className="text-xs text-muted-foreground">{stage.label}</span>
