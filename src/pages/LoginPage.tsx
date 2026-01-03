@@ -161,7 +161,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
       <InteractiveBackground />
       
       {/* Gradient overlay */}
@@ -171,25 +171,25 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md px-6"
+        className="relative z-10 w-full max-w-md"
       >
-        <div className="glass-card p-8">
+        <div className="glass-card p-6 sm:p-8">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4"
+              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4"
             >
-              <span className="text-3xl font-bold text-primary-foreground">G</span>
+              <span className="text-2xl sm:text-3xl font-bold text-primary-foreground">G</span>
             </motion.div>
-            <h1 className="text-3xl font-bold gradient-text mb-2">Genesis Projects</h1>
-            <p className="text-muted-foreground">Sistema de Gestão de Projetos</p>
+            <h1 className="text-2xl sm:text-3xl font-bold gradient-text mb-2">Genesis Projects</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Sistema de Gestão de Projetos</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Token de Acesso
@@ -213,7 +213,7 @@ export default function LoginPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-2 p-3 rounded-lg bg-destructive/20 text-destructive text-sm"
               >
-                <AlertCircle className="w-4 h-4" />
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {error}
               </motion.div>
             )}
@@ -234,16 +234,10 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Token hint */}
-          <div className="mt-6 p-4 rounded-lg bg-muted/30 border border-border/50">
+          {/* Info hint - sem mostrar tokens */}
+          <div className="mt-6 p-3 rounded-lg bg-muted/30 border border-border/50">
             <p className="text-xs text-muted-foreground text-center">
-              <span className="font-medium text-foreground">Tokens disponíveis:</span>
-              <br />
-              GEN-TOKEN-001-ALPHA, GEN-TOKEN-002-BETA
-              <br />
-              GEN-TOKEN-003-GAMMA, GEN-TOKEN-004-DELTA
-              <br />
-              GEN-TOKEN-005-EPSILON, GEN-TOKEN-006-ZETA
+              Solicite seu token de acesso ao administrador do sistema.
             </p>
           </div>
         </div>

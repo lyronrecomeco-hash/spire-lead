@@ -3,15 +3,15 @@ import { motion } from 'framer-motion';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { LeadModal } from '@/components/modals/LeadModal';
-import { Plus, Search, MessageCircle, DollarSign } from 'lucide-react';
+import { Plus, Search, MessageCircle, DollarSign, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   DndContext,
-  DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragStartEvent,
@@ -34,11 +34,11 @@ function KanbanColumn({ column, leads, onCardClick }: { column: typeof columns[0
   const total = leads.reduce((sum, l) => sum + (l.value || 0), 0);
 
   return (
-    <div className="kanban-column">
+    <div className="kanban-column min-w-[260px] lg:min-w-[280px]">
       <div className="flex items-center justify-between mb-2 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full', column.color)} />
-          <span className="font-medium text-sm text-foreground">{column.title}</span>
+          <span className="font-medium text-xs lg:text-sm text-foreground">{column.title}</span>
           <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{leads.length}</span>
         </div>
       </div>
@@ -54,12 +54,12 @@ function KanbanColumn({ column, leads, onCardClick }: { column: typeof columns[0
             key={lead.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="glass-card-hover p-3 cursor-pointer"
+            className="glass-card-hover p-2.5 lg:p-3 cursor-pointer"
             onClick={() => onCardClick(lead)}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="min-w-0">
-                <p className="font-medium text-sm text-foreground truncate">{lead.customer?.name || 'Sem cliente'}</p>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-xs lg:text-sm text-foreground truncate">{lead.customer?.name || 'Sem cliente'}</p>
                 <p className="text-xs text-muted-foreground truncate">{lead.product}</p>
               </div>
               {lead.customer?.phone && (
@@ -92,7 +92,10 @@ export default function KanbanPage() {
   const [editingLead, setEditingLead] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
 
   const filteredLeads = leads.filter(lead =>
     lead.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -115,28 +118,30 @@ export default function KanbanPage() {
 
   return (
     <MainLayout>
-      <div className="h-[calc(100vh-8rem)]">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
+      <div className="h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)]">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Pipeline de Vendas</h1>
-            <p className="text-sm text-muted-foreground">Arraste os cards entre colunas</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Pipeline de Vendas</h1>
+            <p className="text-xs lg:text-sm text-muted-foreground">Arraste os cards entre colunas</p>
           </div>
-          <Button className="btn-primary gap-2" onClick={() => { setEditingLead(null); setIsModalOpen(true); }}>
+          <Button className="btn-primary gap-2 w-full sm:w-auto" onClick={() => { setEditingLead(null); setIsModalOpen(true); }}>
             <Plus className="w-4 h-4" />
             Novo Lead
           </Button>
         </motion.div>
 
-        <div className="relative mb-4 max-w-sm">
+        <div className="relative mb-4 max-w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 input-field h-9" />
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex gap-3 overflow-x-auto pb-4">
+            <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.id}
