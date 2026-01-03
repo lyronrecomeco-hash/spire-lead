@@ -1,10 +1,9 @@
-import { motion } from 'framer-motion';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { useActivities } from '@/hooks/useActivities';
 import { useTasks } from '@/hooks/useTasks';
-import { PipelineChart, ConversionFunnelChart, LeadsBySourceChart, RevenueChart } from '@/components/dashboard/InteractiveCharts';
+import { LeadsOverTimeChart, RevenueOverTimeChart } from '@/components/dashboard/InteractiveCharts';
 import { Users, Handshake, TrendingUp, DollarSign, AlertCircle, CheckSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -19,10 +18,10 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+        <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
           <p className="text-muted-foreground text-sm lg:text-base">Visão geral - Genesis Projects</p>
-        </motion.div>
+        </div>
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
@@ -34,15 +33,13 @@ export default function Dashboard() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <PipelineChart />
-          <ConversionFunnelChart />
-          <LeadsBySourceChart />
-          <RevenueChart />
+          <LeadsOverTimeChart />
+          <RevenueOverTimeChart />
         </div>
 
         {/* Tasks and Activities */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 lg:p-5">
+          <div className="glass-card p-4 lg:p-5">
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
               <CheckSquare className="w-5 h-5 text-primary" />
               Tarefas Pendentes
@@ -66,9 +63,9 @@ export default function Dashboard() {
                 ))
               )}
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-4 lg:p-5">
+          <div className="glass-card p-4 lg:p-5">
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-primary" />
               Atividades Recentes
@@ -89,7 +86,7 @@ export default function Dashboard() {
                 <p className="text-muted-foreground text-sm">Nenhuma atividade recente</p>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </MainLayout>
