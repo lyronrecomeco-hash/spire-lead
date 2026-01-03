@@ -225,23 +225,6 @@ export default function KanbanPage() {
           </div>
         </div>
 
-        {/* Status Summary Bar */}
-        <div className="flex gap-3 mb-4 overflow-x-auto pb-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 flex-shrink-0">
-            <span className="text-xs text-muted-foreground">Total:</span>
-            <span className="text-sm font-bold text-foreground">{stats.total}</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/10 flex-shrink-0">
-            <CheckCircle className="w-4 h-4 text-success" />
-            <span className="text-xs text-success">Pagos:</span>
-            <span className="text-sm font-bold text-success">{stats.paid}</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 flex-shrink-0">
-            <Clock className="w-4 h-4 text-warning" />
-            <span className="text-xs text-warning">Não Pagos:</span>
-            <span className="text-sm font-bold text-warning">{stats.pending}</span>
-          </div>
-        </div>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
