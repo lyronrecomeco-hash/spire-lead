@@ -243,7 +243,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2024 Genesis Projects. Todos os direitos reservados.
+          © 2026 Genesis Projects. Todos os direitos reservados.
         </p>
       </motion.div>
     </div>
