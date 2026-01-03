@@ -8,10 +8,16 @@ import Dashboard from "./pages/Dashboard";
 import KanbanPage from "./pages/KanbanPage";
 import LeadsPage from "./pages/LeadsPage";
 import LoginPage from "./pages/LoginPage";
-import { WhatsAppPage, RelatoriosPage, AutomacoesPage, ConfiguracoesPage } from "./pages/PlaceholderPages";
+import FunilVendasPage from "./pages/FunilVendasPage";
+import AtendimentosPage from "./pages/AtendimentosPage";
+import PedidosPage from "./pages/PedidosPage";
+import AgendaPage from "./pages/AgendaPage";
+import EquipePage from "./pages/EquipePage";
+import TemplatesPage from "./pages/TemplatesPage";
+import RelatoriosPage from "./pages/RelatoriosPage";
+import { ConfiguracoesPage } from "./pages/PlaceholderPages";
 import NotFound from "./pages/NotFound";
 
-// Lazy load pages that use hooks
 import { lazy, Suspense } from "react";
 const ClientesPage = lazy(() => import("./pages/ClientesPage"));
 const TarefasPage = lazy(() => import("./pages/TarefasPage"));
@@ -36,13 +42,17 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/kanban" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
+        <Route path="/funil" element={<ProtectedRoute><FunilVendasPage /></ProtectedRoute>} />
+        <Route path="/atendimentos" element={<ProtectedRoute><AtendimentosPage /></ProtectedRoute>} />
+        <Route path="/pedidos" element={<ProtectedRoute><PedidosPage /></ProtectedRoute>} />
+        <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+        <Route path="/equipe" element={<ProtectedRoute><EquipePage /></ProtectedRoute>} />
         <Route path="/clientes" element={<ProtectedRoute><ClientesPage /></ProtectedRoute>} />
         <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
         <Route path="/tarefas" element={<ProtectedRoute><TarefasPage /></ProtectedRoute>} />
-        <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppPage /></ProtectedRoute>} />
         <Route path="/financeiro" element={<ProtectedRoute><FinanceiroPage /></ProtectedRoute>} />
         <Route path="/relatorios" element={<ProtectedRoute><RelatoriosPage /></ProtectedRoute>} />
-        <Route path="/automacoes" element={<ProtectedRoute><AutomacoesPage /></ProtectedRoute>} />
+        <Route path="/templates" element={<ProtectedRoute><TemplatesPage /></ProtectedRoute>} />
         <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

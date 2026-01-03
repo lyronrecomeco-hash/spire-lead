@@ -1,0 +1,170 @@
+import { MainLayout } from '@/components/layout/MainLayout';
+import { useState } from 'react';
+import { FileText, MessageCircle, Mail, Plus, Copy, Edit, Trash2, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+interface Template {
+  id: string;
+  name: string;
+  category: 'whatsapp' | 'email' | 'outros';
+  content: string;
+}
+
+const defaultTemplates: Template[] = [
+  {
+    id: '1',
+    name: 'Boas-vindas',
+    category: 'whatsapp',
+    content: 'Olá {nome}! Seja bem-vindo(a) à nossa empresa. Estou à disposição para ajudá-lo(a) no que precisar. 🙌',
+  },
+  {
+    id: '2',
+    name: 'Follow-up Proposta',
+    category: 'whatsapp',
+    content: 'Olá {nome}, tudo bem? Gostaria de saber se teve a oportunidade de analisar nossa proposta. Fico no aguardo do seu retorno! 📋',
+  },
+  {
+    id: '3',
+    name: 'Confirmação de Pagamento',
+    category: 'email',
+    content: 'Prezado(a) {nome},\n\nConfirmamos o recebimento do seu pagamento no valor de R$ {valor}.\n\nAgradecemos a preferência!\n\nAtenciosamente,\nEquipe Genesis',
+  },
+  {
+    id: '4',
+    name: 'Lembrete de Reunião',
+    category: 'whatsapp',
+    content: 'Olá {nome}! 👋 Só passando para lembrar da nossa reunião amanhã às {horario}. Confirma sua presença? ✅',
+  },
+  {
+    id: '5',
+    name: 'Proposta Comercial',
+    category: 'email',
+    content: 'Prezado(a) {nome},\n\nSegue em anexo nossa proposta comercial conforme conversado.\n\nValor: R$ {valor}\nCondições: {condicoes}\n\nFicamos à disposição para esclarecer qualquer dúvida.\n\nAtenciosamente,\nEquipe Genesis',
+  },
+];
+
+const categoryConfig = {
+  whatsapp: { label: 'WhatsApp', icon: MessageCircle, color: 'text-success', bg: 'bg-success/20' },
+  email: { label: 'E-mail', icon: Mail, color: 'text-info', bg: 'bg-info/20' },
+  outros: { label: 'Outros', icon: FileText, color: 'text-muted-foreground', bg: 'bg-muted' },
+};
+
+export default function TemplatesPage() {
+  const [templates] = useState<Template[]>(defaultTemplates);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filteredTemplates = selectedCategory === 'all' 
+    ? templates 
+    : templates.filter(t => t.category === selectedCategory);
+
+  const handleCopy = (template: Template) => {
+    navigator.clipboard.writeText(template.content);
+    setCopiedId(template.id);
+    toast.success('Template copiado!');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Templates</h1>
+            <p className="text-muted-foreground text-sm">Mensagens prontas para agilizar seu atendimento</p>
+          </div>
+          <Button className="btn-primary gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Template
+          </Button>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            variant={selectedCategory === 'all' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setSelectedCategory('all')}
+          >
+            Todos
+          </Button>
+          {Object.entries(categoryConfig).map(([key, config]) => {
+            const Icon = config.icon;
+            return (
+              <Button 
+                key={key}
+                variant={selectedCategory === key ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setSelectedCategory(key)}
+                className="gap-2"
+              >
+                <Icon className="w-4 h-4" />
+                {config.label}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{templates.length}</p>
+            <p className="text-sm text-muted-foreground">Total</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-bold text-success">{templates.filter(t => t.category === 'whatsapp').length}</p>
+            <p className="text-sm text-muted-foreground">WhatsApp</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-bold text-info">{templates.filter(t => t.category === 'email').length}</p>
+            <p className="text-sm text-muted-foreground">E-mail</p>
+          </div>
+        </div>
+
+        {/* Templates Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {filteredTemplates.map((template) => {
+            const config = categoryConfig[template.category];
+            const Icon = config.icon;
+
+            return (
+              <div key={template.id} className="glass-card p-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('p-2 rounded-lg', config.bg)}>
+                      <Icon className={cn('w-4 h-4', config.color)} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{template.name}</p>
+                      <span className={cn('text-xs', config.color)}>{config.label}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => handleCopy(template)}
+                      className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {copiedId === template.id ? (
+                        <Check className="w-4 h-4 text-success" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{template.content}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </MainLayout>
+  );
+}
