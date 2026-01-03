@@ -22,15 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-const defaultColumns = [
-  { id: 'new', title: 'Novo', color: 'bg-info' },
-  { id: 'contacted', title: 'Contato', color: 'bg-primary' },
-  { id: 'proposal', title: 'Proposta', color: 'bg-accent' },
-  { id: 'negotiation', title: 'Negociação', color: 'bg-warning' },
-  { id: 'waiting_payment', title: 'Pagamento', color: 'bg-orange-500' },
-  { id: 'closed', title: 'Concluído', color: 'bg-success' },
-  { id: 'lost', title: 'Perdido', color: 'bg-destructive' },
-];
+type KanbanStatusColumn = { id: string; title: string; color: string };
+
+const initialColumns: KanbanStatusColumn[] = [];
 
 const paymentStatusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   pending: { label: 'Não Pago', color: 'text-warning', bg: 'bg-warning/20', icon: Clock },
@@ -40,7 +34,7 @@ const paymentStatusConfig: Record<string, { label: string; color: string; bg: st
 };
 
 function KanbanColumn({ column, leads, onCardClick, onAddLead }: { 
-  column: typeof defaultColumns[0]; 
+  column: KanbanStatusColumn; 
   leads: any[]; 
   onCardClick: (lead: any) => void;
   onAddLead: () => void;
@@ -137,8 +131,8 @@ export default function KanbanPage() {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
-  const [defaultStatus, setDefaultStatus] = useState<string>('new');
-  const [columns, setColumns] = useState(defaultColumns);
+  const [defaultStatus, setDefaultStatus] = useState<string>('');
+  const [columns, setColumns] = useState<KanbanStatusColumn[]>(initialColumns);
   const [newStatusName, setNewStatusName] = useState('');
 
   const sensors = useSensors(
@@ -178,6 +172,16 @@ export default function KanbanPage() {
     setIsLeadModalOpen(true);
   };
 
+  const handleNewLeadFromHeader = () => {
+    if (columns.length === 0) {
+      toast.info('Crie um status antes de adicionar leads.');
+      setIsStatusModalOpen(true);
+      return;
+    }
+
+    handleAddLead(columns[0].id);
+  };
+
   const handleAddStatus = () => {
     if (!newStatusName.trim()) return;
     const id = newStatusName.toLowerCase().replace(/\s+/g, '_');
@@ -185,7 +189,8 @@ export default function KanbanPage() {
       toast.error('Status já existe!');
       return;
     }
-    setColumns([...columns.slice(0, -1), { id, title: newStatusName, color: 'bg-muted-foreground' }, columns[columns.length - 1]]);
+
+    setColumns(prev => [...prev, { id, title: newStatusName, color: 'bg-muted-foreground' }]);
     setNewStatusName('');
     toast.success('Status adicionado!');
   };
@@ -218,7 +223,7 @@ export default function KanbanPage() {
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Cliente</span>
             </Button>
-            <Button className="btn-primary gap-2" size="sm" onClick={() => handleAddLead('new')}>
+            <Button className="btn-primary gap-2" size="sm" onClick={handleNewLeadFromHeader}>
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Novo Lead</span>
             </Button>
@@ -251,6 +256,16 @@ export default function KanbanPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12 flex-1">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : columns.length === 0 ? (
+          <div className="flex items-center justify-center py-12 flex-1">
+            <div className="text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Nenhum status criado ainda.</p>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsStatusModalOpen(true)}>
+                <Settings2 className="w-4 h-4" />
+                Criar status
+              </Button>
+            </div>
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
