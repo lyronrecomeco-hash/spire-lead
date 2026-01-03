@@ -3,7 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { useCustomers } from '@/hooks/useCustomers';
 import { LeadModal } from '@/components/modals/LeadModal';
-import { Plus, Search, MessageCircle, DollarSign, Loader2, CheckCircle, XCircle, Clock, UserPlus, Filter, AlertTriangle } from 'lucide-react';
+import { Plus, Search, MessageCircle, DollarSign, Loader2, CheckCircle, XCircle, Clock, UserPlus, Filter, AlertTriangle, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -19,8 +19,10 @@ import {
 import { useDroppable } from '@dnd-kit/core';
 import { CustomerModal } from '@/components/modals/CustomerModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
-const columns = [
+const defaultColumns = [
   { id: 'new', title: 'Novo', color: 'bg-info' },
   { id: 'contacted', title: 'Contato', color: 'bg-primary' },
   { id: 'proposal', title: 'Proposta', color: 'bg-accent' },
@@ -31,14 +33,14 @@ const columns = [
 ];
 
 const paymentStatusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  pending: { label: 'Pendente', color: 'text-warning', bg: 'bg-warning/20', icon: Clock },
+  pending: { label: 'Não Pago', color: 'text-warning', bg: 'bg-warning/20', icon: Clock },
   partial: { label: 'Parcial', color: 'text-info', bg: 'bg-info/20', icon: DollarSign },
   paid: { label: 'Pago', color: 'text-success', bg: 'bg-success/20', icon: CheckCircle },
   overdue: { label: 'Atrasado', color: 'text-destructive', bg: 'bg-destructive/20', icon: AlertTriangle },
 };
 
 function KanbanColumn({ column, leads, onCardClick, onAddLead }: { 
-  column: typeof columns[0]; 
+  column: typeof defaultColumns[0]; 
   leads: any[]; 
   onCardClick: (lead: any) => void;
   onAddLead: () => void;
@@ -56,7 +58,7 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
         </div>
         <button 
           onClick={onAddLead}
-          className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -66,7 +68,7 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
       </div>
       <div
         ref={setNodeRef}
-        className={cn('space-y-2 min-h-[120px] rounded-lg transition-colors p-1', isOver && 'bg-primary/10 ring-2 ring-primary/30 ring-dashed')}
+        className={cn('space-y-2 min-h-[120px] rounded-lg p-1', isOver && 'bg-primary/10 ring-2 ring-primary/30 ring-dashed')}
       >
         {leads.map((lead) => {
           const paymentInfo = paymentStatusConfig[lead.payment_status] || paymentStatusConfig.pending;
@@ -89,7 +91,7 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
                 {lead.customer?.phone && (
                   <button
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.customer.phone.replace(/\D/g, '')}`, '_blank'); }}
-                    className="p-1.5 rounded-lg bg-success/20 text-success opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1.5 rounded-lg bg-success/20 text-success opacity-0 group-hover:opacity-100"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                   </button>
@@ -111,7 +113,10 @@ function KanbanColumn({ column, leads, onCardClick, onAddLead }: {
           );
         })}
         {leads.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <div 
+            className="flex flex-col items-center justify-center py-8 text-muted-foreground cursor-pointer hover:bg-muted/30 rounded-lg"
+            onClick={onAddLead}
+          >
             <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-2">
               <Plus className="w-5 h-5" />
             </div>
@@ -130,8 +135,11 @@ export default function KanbanPage() {
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [defaultStatus, setDefaultStatus] = useState<string>('new');
+  const [columns, setColumns] = useState(defaultColumns);
+  const [newStatusName, setNewStatusName] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -153,8 +161,10 @@ export default function KanbanPage() {
       const lead = leads.find(l => l.id === leadId);
       
       if (columns.some(c => c.id === newStatus) && lead) {
+        // Se mover para Concluído, marca como pago
         if (newStatus === 'closed' && lead.payment_status !== 'paid') {
           await updateLead(leadId, { status: newStatus, payment_status: 'paid' });
+          toast.success('Lead movido e marcado como pago!');
         } else {
           await updateLeadStatus(leadId, newStatus);
         }
@@ -168,11 +178,23 @@ export default function KanbanPage() {
     setIsLeadModalOpen(true);
   };
 
+  const handleAddStatus = () => {
+    if (!newStatusName.trim()) return;
+    const id = newStatusName.toLowerCase().replace(/\s+/g, '_');
+    if (columns.some(c => c.id === id)) {
+      toast.error('Status já existe!');
+      return;
+    }
+    setColumns([...columns.slice(0, -1), { id, title: newStatusName, color: 'bg-muted-foreground' }, columns[columns.length - 1]]);
+    setNewStatusName('');
+    toast.success('Status adicionado!');
+  };
+
   // Stats
   const stats = {
     total: leads.length,
     paid: leads.filter(l => l.payment_status === 'paid').length,
-    pending: leads.filter(l => l.payment_status === 'pending').length,
+    pending: leads.filter(l => l.payment_status === 'pending' || !l.payment_status).length,
     totalValue: leads.reduce((sum, l) => sum + (l.value || 0), 0),
   };
 
@@ -188,6 +210,10 @@ export default function KanbanPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsStatusModalOpen(true)}>
+              <Settings2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Status</span>
+            </Button>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsCustomerModalOpen(true)}>
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Cliente</span>
@@ -196,6 +222,24 @@ export default function KanbanPage() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Novo Lead</span>
             </Button>
+          </div>
+        </div>
+
+        {/* Status Summary Bar */}
+        <div className="flex gap-3 mb-4 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 flex-shrink-0">
+            <span className="text-xs text-muted-foreground">Total:</span>
+            <span className="text-sm font-bold text-foreground">{stats.total}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/10 flex-shrink-0">
+            <CheckCircle className="w-4 h-4 text-success" />
+            <span className="text-xs text-success">Pagos:</span>
+            <span className="text-sm font-bold text-success">{stats.paid}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 flex-shrink-0">
+            <Clock className="w-4 h-4 text-warning" />
+            <span className="text-xs text-warning">Não Pagos:</span>
+            <span className="text-sm font-bold text-warning">{stats.pending}</span>
           </div>
         </div>
 
@@ -212,7 +256,7 @@ export default function KanbanPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="pending">Não Pago</SelectItem>
               <SelectItem value="partial">Parcial</SelectItem>
               <SelectItem value="paid">Pago</SelectItem>
               <SelectItem value="overdue">Atrasado</SelectItem>
@@ -241,6 +285,38 @@ export default function KanbanPage() {
           </DndContext>
         )}
       </div>
+
+      {/* Status Management Modal */}
+      <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Status</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Nome do novo status..." 
+                value={newStatusName} 
+                onChange={(e) => setNewStatusName(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAddStatus}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Status atuais:</p>
+              {columns.map((col) => (
+                <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                  <div className={cn('w-3 h-3 rounded-full', col.color)} />
+                  <span className="text-sm text-foreground">{col.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <LeadModal 
         isOpen={isLeadModalOpen} 

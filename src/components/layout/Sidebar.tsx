@@ -93,6 +93,26 @@ export function Sidebar({ className, onCollapsedChange }: SidebarProps) {
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
+            const isTemplates = item.path === '/templates';
+            
+            if (isTemplates) {
+              return (
+                <li key={item.path}>
+                  <div
+                    className={cn(
+                      'sidebar-item relative opacity-50 cursor-not-allowed',
+                      isActive && 'active'
+                    )}
+                    title="Em desenvolvimento"
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </div>
+                </li>
+              );
+            }
             
             return (
               <li key={item.path}>

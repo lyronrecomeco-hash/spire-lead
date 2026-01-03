@@ -1,9 +1,7 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useState } from 'react';
-import { FileText, MessageCircle, Mail, Plus, Copy, Edit, Trash2, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FileText, MessageCircle, Mail, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface Template {
   id: string;
@@ -53,62 +51,34 @@ const categoryConfig = {
 
 export default function TemplatesPage() {
   const [templates] = useState<Template[]>(defaultTemplates);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const filteredTemplates = selectedCategory === 'all' 
-    ? templates 
-    : templates.filter(t => t.category === selectedCategory);
-
-  const handleCopy = (template: Template) => {
-    navigator.clipboard.writeText(template.content);
-    setCopiedId(template.id);
-    toast.success('Template copiado!');
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Header with disabled notice */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Templates</h1>
             <p className="text-muted-foreground text-sm">Mensagens prontas para agilizar seu atendimento</p>
           </div>
-          <Button className="btn-primary gap-2">
-            <Plus className="w-4 h-4" />
-            Novo Template
-          </Button>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-warning/10 border border-warning/30">
+            <Lock className="w-4 h-4 text-warning" />
+            <span className="text-sm text-warning font-medium">Módulo em Desenvolvimento</span>
+          </div>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex gap-2 flex-wrap">
-          <Button 
-            variant={selectedCategory === 'all' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setSelectedCategory('all')}
-          >
-            Todos
-          </Button>
-          {Object.entries(categoryConfig).map(([key, config]) => {
-            const Icon = config.icon;
-            return (
-              <Button 
-                key={key}
-                variant={selectedCategory === key ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setSelectedCategory(key)}
-                className="gap-2"
-              >
-                <Icon className="w-4 h-4" />
-                {config.label}
-              </Button>
-            );
-          })}
+        {/* Disabled overlay notification */}
+        <div className="glass-card p-6 text-center border-2 border-dashed border-muted-foreground/30">
+          <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Funcionalidade Temporariamente Indisponível</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            O módulo de Templates está em desenvolvimento e estará disponível em breve. 
+            Visualize abaixo exemplos dos templates que poderão ser utilizados.
+          </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* Stats - Disabled */}
+        <div className="grid grid-cols-3 gap-4 opacity-60 pointer-events-none select-none">
           <div className="glass-card p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{templates.length}</p>
             <p className="text-sm text-muted-foreground">Total</p>
@@ -123,14 +93,17 @@ export default function TemplatesPage() {
           </div>
         </div>
 
-        {/* Templates Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filteredTemplates.map((template) => {
+        {/* Templates Grid - Disabled */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 opacity-60 pointer-events-none select-none">
+          {templates.map((template) => {
             const config = categoryConfig[template.category];
             const Icon = config.icon;
 
             return (
-              <div key={template.id} className="glass-card p-4">
+              <div key={template.id} className="glass-card p-4 relative">
+                <div className="absolute top-2 right-2">
+                  <Lock className="w-4 h-4 text-muted-foreground" />
+                </div>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     <div className={cn('p-2 rounded-lg', config.bg)}>
@@ -141,24 +114,9 @@ export default function TemplatesPage() {
                       <span className={cn('text-xs', config.color)}>{config.label}</span>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={() => handleCopy(template)}
-                      className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {copiedId === template.id ? (
-                        <Check className="w-4 h-4 text-success" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
                 <div className="bg-muted/30 rounded-lg p-3">
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{template.content}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">{template.content}</p>
                 </div>
               </div>
             );
