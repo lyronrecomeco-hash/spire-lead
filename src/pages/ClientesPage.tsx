@@ -254,7 +254,6 @@ export default function ClientesPage() {
           setSelectedCustomer(null);
         }}
         customer={selectedCustomer}
-        onSave={handleSaveCustomer}
       />
 
       <ConfirmDeleteModal

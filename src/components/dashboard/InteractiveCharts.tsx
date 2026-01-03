@@ -1,37 +1,19 @@
-import { motion } from 'framer-motion';
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   LineChart,
   Line,
-  Legend,
-  AreaChart,
-  Area,
 } from 'recharts';
-import { useLeads, Lead } from '@/hooks/useLeads';
+import { useLeads } from '@/hooks/useLeads';
 import { usePayments } from '@/hooks/usePayments';
 import { useMemo } from 'react';
-
-const COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#6366f1'];
-
-const statusLabels: Record<string, string> = {
-  new: 'Novo',
-  contacted: 'Contato',
-  proposal: 'Proposta',
-  negotiation: 'Negociação',
-  waiting_payment: 'Aguardando',
-  closed: 'Fechado',
-  post_sale: 'Pós-venda',
-  lost: 'Perdido',
-};
+import { format, subDays, eachDayOfInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -42,12 +24,12 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="glass-card p-3 border border-border/50">
-        <p className="font-medium text-foreground text-sm">{label}</p>
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+        <p className="font-medium text-foreground text-sm mb-1">{label}</p>
         {payload.map((entry, index) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: {typeof entry.value === 'number' && entry.value >= 1000 
-              ? `R$ ${(entry.value / 1000).toFixed(1)}k` 
+              ? `R$ ${entry.value.toLocaleString('pt-BR')}` 
               : entry.value}
           </p>
         ))}
@@ -57,305 +39,134 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   return null;
 };
 
-export function PipelineChart() {
+export function LeadsOverTimeChart() {
   const { leads } = useLeads();
 
   const data = useMemo(() => {
-    const statusCount: Record<string, { count: number; value: number }> = {};
-    
-    leads.forEach((lead) => {
-      if (!statusCount[lead.status]) {
-        statusCount[lead.status] = { count: 0, value: 0 };
-      }
-      statusCount[lead.status].count += 1;
-      statusCount[lead.status].value += lead.value;
+    const last7Days = eachDayOfInterval({
+      start: subDays(new Date(), 6),
+      end: new Date(),
     });
 
-    return Object.entries(statusCount).map(([status, data]) => ({
-      name: statusLabels[status] || status,
-      leads: data.count,
-      valor: data.value,
-    }));
-  }, [leads]);
+    return last7Days.map(day => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const count = leads.filter(lead => {
+        const leadDate = format(new Date(lead.created_at), 'yyyy-MM-dd');
+        return leadDate === dayStr;
+      }).length;
 
-  if (leads.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6"
-      >
-        <h3 className="font-semibold text-foreground mb-4">Pipeline de Vendas</h3>
-        <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-          Sem dados para exibir
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-4 lg:p-6"
-    >
-      <h3 className="font-semibold text-foreground mb-4">Pipeline de Vendas</h3>
-      <div className="h-[250px] lg:h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 47%, 16%)" />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
-              interval={0}
-              angle={-45}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="leads" name="Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </motion.div>
-  );
-}
-
-export function ConversionFunnelChart() {
-  const { leads } = useLeads();
-
-  const funnelData = useMemo(() => {
-    const stages = ['new', 'contacted', 'proposal', 'negotiation', 'waiting_payment', 'closed'];
-    const counts = stages.map(status => 
-      leads.filter(l => stages.indexOf(l.status) >= stages.indexOf(status)).length
-    );
-
-    return stages.map((status, i) => ({
-      name: statusLabels[status],
-      value: counts[i],
-      fill: COLORS[i % COLORS.length],
-    }));
-  }, [leads]);
-
-  if (leads.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6"
-      >
-        <h3 className="font-semibold text-foreground mb-4">Funil de Conversão</h3>
-        <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-          Sem dados para exibir
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="glass-card p-4 lg:p-6"
-    >
-      <h3 className="font-semibold text-foreground mb-4">Funil de Conversão</h3>
-      <div className="h-[250px] lg:h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart 
-            data={funnelData} 
-            layout="vertical" 
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 47%, 16%)" horizontal={false} />
-            <XAxis 
-              type="number" 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
-            />
-            <YAxis 
-              type="category" 
-              dataKey="name"
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
-              width={80}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="value" name="Leads" radius={[0, 4, 4, 0]}>
-              {funnelData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </motion.div>
-  );
-}
-
-export function LeadsBySourceChart() {
-  const { leads } = useLeads();
-
-  const data = useMemo(() => {
-    const sourceCount: Record<string, number> = {};
-    
-    leads.forEach((lead) => {
-      const source = lead.customer?.source || 'Desconhecido';
-      sourceCount[source] = (sourceCount[source] || 0) + 1;
+      return {
+        date: format(day, 'dd/MM', { locale: ptBR }),
+        leads: count,
+      };
     });
-
-    return Object.entries(sourceCount).map(([name, value], index) => ({
-      name,
-      value,
-      fill: COLORS[index % COLORS.length],
-    }));
   }, [leads]);
 
-  if (leads.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6"
-      >
-        <h3 className="font-semibold text-foreground mb-4">Leads por Origem</h3>
-        <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-          Sem dados para exibir
-        </div>
-      </motion.div>
-    );
-  }
+  const maxValue = Math.max(...data.map(d => d.leads), 4);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="glass-card p-4 lg:p-6"
-    >
-      <h3 className="font-semibold text-foreground mb-4">Leads por Origem</h3>
-      <div className="h-[250px] lg:h-[300px] flex items-center">
+    <div className="glass-card p-4 lg:p-6">
+      <h3 className="font-semibold text-foreground mb-4">Novos Leads</h3>
+      <div className="h-[200px] lg:h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-              labelLine={false}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={true} />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
+            />
+            <YAxis 
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
+              domain={[0, maxValue]}
+              allowDecimals={false}
+            />
             <Tooltip content={<CustomTooltip />} />
-          </PieChart>
+            <Line 
+              type="linear" 
+              dataKey="leads" 
+              name="Leads"
+              stroke="hsl(var(--primary))" 
+              strokeWidth={2}
+              dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 4 }}
+              activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
+            />
+          </LineChart>
         </ResponsiveContainer>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-export function RevenueChart() {
+export function RevenueOverTimeChart() {
   const { payments } = usePayments();
 
   const data = useMemo(() => {
-    const monthlyData: Record<string, { received: number; pending: number }> = {};
-    
-    payments.forEach((payment) => {
-      const date = new Date(payment.due_date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { received: 0, pending: 0 };
-      }
-      
-      if (payment.status === 'paid') {
-        monthlyData[monthKey].received += payment.amount;
-      } else {
-        monthlyData[monthKey].pending += payment.amount;
-      }
+    const last7Days = eachDayOfInterval({
+      start: subDays(new Date(), 6),
+      end: new Date(),
     });
 
-    return Object.entries(monthlyData)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
-      .map(([month, data]) => ({
-        name: new Date(month + '-01').toLocaleDateString('pt-BR', { month: 'short' }),
-        recebido: data.received,
-        pendente: data.pending,
-      }));
+    return last7Days.map(day => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const dayPayments = payments.filter(p => {
+        const paymentDate = format(new Date(p.created_at), 'yyyy-MM-dd');
+        return paymentDate === dayStr && p.status === 'paid';
+      });
+      const total = dayPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      return {
+        date: format(day, 'dd/MM', { locale: ptBR }),
+        valor: total,
+      };
+    });
   }, [payments]);
 
-  if (payments.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6"
-      >
-        <h3 className="font-semibold text-foreground mb-4">Receita Mensal</h3>
-        <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-          Sem dados para exibir
-        </div>
-      </motion.div>
-    );
-  }
+  const maxValue = Math.max(...data.map(d => d.valor), 1000);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="glass-card p-4 lg:p-6"
-    >
-      <h3 className="font-semibold text-foreground mb-4">Receita Mensal</h3>
-      <div className="h-[250px] lg:h-[300px]">
+    <div className="glass-card p-4 lg:p-6">
+      <h3 className="font-semibold text-foreground mb-4">Receita (7 dias)</h3>
+      <div className="h-[200px] lg:h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 47%, 16%)" />
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={true} />
             <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
+              dataKey="date" 
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
             />
             <YAxis 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222, 47%, 16%)' }}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
+              domain={[0, maxValue]}
+              tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
             <Area 
-              type="monotone" 
-              dataKey="recebido" 
-              name="Recebido"
-              stackId="1"
-              stroke="#10b981" 
-              fill="#10b981"
-              fillOpacity={0.3}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="pendente" 
-              name="Pendente"
-              stackId="1"
-              stroke="#f59e0b" 
-              fill="#f59e0b"
-              fillOpacity={0.3}
+              type="linear" 
+              dataKey="valor" 
+              name="Receita"
+              stroke="hsl(var(--success))" 
+              strokeWidth={2}
+              fill="url(#colorRevenue)"
+              dot={{ fill: 'hsl(var(--success))', strokeWidth: 0, r: 4 }}
+              activeDot={{ r: 6, fill: 'hsl(var(--success))' }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </motion.div>
+    </div>
   );
 }
